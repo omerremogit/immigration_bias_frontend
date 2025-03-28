@@ -3,171 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Immigration Visa Prediction</title>
+  <title>Visa Decisioning System</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f4f9;
+      margin: 0;
       padding: 20px;
-      max-width: 900px;
+    }
+    .container {
+      max-width: 600px;
       margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
       text-align: center;
     }
-
-    h1 {
-      color: #333;
-    }
-
     .form-group {
-      margin: 10px 0;
+      margin-bottom: 15px;
     }
-
-    label {
-      font-size: 16px;
+    .form-group label {
       display: block;
-      margin-bottom: 5px;
+      font-size: 1.1em;
     }
-
-    input {
-      padding: 8px;
-      font-size: 16px;
+    .form-group input {
       width: 100%;
-      max-width: 300px;
-      margin: 5px 0;
+      padding: 10px;
+      font-size: 1em;
+      margin-top: 5px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
     }
-
-    button {
-      padding: 10px 20px;
-      background-color: #007bff;
+    .form-group button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
       color: white;
+      font-size: 1.1em;
       border: none;
-      font-size: 16px;
       cursor: pointer;
+      border-radius: 4px;
     }
-
-    button:hover {
-      background-color: #0056b3;
+    .form-group button:hover {
+      background-color: #45a049;
     }
-
-    .result {
+    .result, .explanation {
       margin-top: 20px;
-      background-color: #e0e0e0;
-      padding: 15px;
-      border-radius: 5px;
-    }
-
-    .explanation, .audit-result {
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    .loading {
-      display: none;
-      font-size: 18px;
-      color: #333;
-      font-weight: bold;
-    }
-
-    .error {
-      color: red;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-radius: 4px;
+      font-size: 1.1em;
     }
   </style>
 </head>
 <body>
 
-  <h1>Immigration Visa Prediction</h1>
+  <div class="container">
+    <h1>Visa Decisioning System</h1>
 
-  <form id="visaForm">
+    <!-- Input form for the user -->
     <div class="form-group">
-      <label for="age">Age:</label>
-      <input type="number" id="age" name="age" required>
+      <label for="age">Age</label>
+      <input type="number" id="age" placeholder="Enter your age" required>
     </div>
+
     <div class="form-group">
-      <label for="priors_count">Priors Count:</label>
-      <input type="number" id="priors_count" name="priors_count" required>
+      <label for="priorsCount">Number of Prior Offenses</label>
+      <input type="number" id="priorsCount" placeholder="Enter number of prior offenses" required>
     </div>
+
     <div class="form-group">
-      <label for="race">Race (0 = Non-White, 1 = White):</label>
-      <input type="number" id="race" name="race" required min="0" max="1">
+      <label for="race">Race (0 = Other, 1 = Caucasian, etc.)</label>
+      <input type="number" id="race" placeholder="Enter race code" required>
     </div>
-    <button type="submit">Submit</button>
-  </form>
 
-  <div id="loading" class="loading">Loading...</div>
+    <div class="form-group">
+      <button id="predictButton">Predict Visa Decision</button>
+    </div>
 
-  <div id="result" class="result">
-    <h2>Prediction Result:</h2>
-    <p id="visaDecision"></p>
+    <!-- Display result here -->
+    <div class="result" id="result"></div>
 
-    <h2>Explanation:</h2>
-    <ul id="explanation"></ul>
+    <div class="form-group">
+      <button id="explainButton">Explain Decision</button>
+    </div>
 
-    <h2>Audit Report:</h2>
-    <p id="auditResult"></p>
+    <!-- Display explanation here -->
+    <div class="explanation" id="explanation"></div>
   </div>
 
-  <div id="error" class="error"></div>
-
   <script>
-    document.getElementById('visaForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
-      
-      // Show loading message
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('result').style.display = 'none';
-      document.getElementById('error').style.display = 'none';
+    // Function to handle prediction
+    const predictButton = document.getElementById('predictButton');
+    predictButton.addEventListener('click', async () => {
+      const age = document.getElementById('age').value;
+      const priorsCount = document.getElementById('priorsCount').value;
+      const race = document.getElementById('race').value;
 
-      const data = {
-        age: parseInt(document.getElementById('age').value),
-        priors_count: parseInt(document.getElementById('priors_count').value),
-        race: parseInt(document.getElementById('race').value)
-      };
+      // Send POST request to backend /predict endpoint
+      const response = await fetch('https://immigrationbiasproject-production.up.railway.app/predict', {
+        method: 'POST', // Make sure it's a POST request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          age: parseFloat(age),
+          priors_count: parseInt(priorsCount),
+          race: parseInt(race),
+        }),
+      });
 
-      try {
-        // Predict visa decision
-        const response = await fetch('https://immigrationbiasproject-production.up.railway.app/predict', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-        const prediction = await response.json();
+      const data = await response.json();
+      document.getElementById('result').innerText = `Visa Decision: ${data.visa_decision}`;
+    });
 
-        // Show visa decision
-        document.getElementById('visaDecision').innerText = prediction.visa_decision;
+    // Function to handle explanation
+    const explainButton = document.getElementById('explainButton');
+    explainButton.addEventListener('click', async () => {
+      const age = document.getElementById('age').value;
+      const priorsCount = document.getElementById('priorsCount').value;
+      const race = document.getElementById('race').value;
 
-        // Explain the decision
-        const explainResponse = await fetch('https://immigrationbiasproject-production.up.railway.app/explain', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-        const explanation = await explainResponse.json();
-        const explanationList = document.getElementById('explanation');
-        explanationList.innerHTML = '';
-        explanation.explanation.forEach(item => {
-          const listItem = document.createElement('li');
-          listItem.innerText = `${item[0]}: ${item[1]}`;
-          explanationList.appendChild(listItem);
-        });
+      // Send POST request to backend /explain endpoint
+      const response = await fetch('https://immigrationbiasproject-production.up.railway.app/explain', {
+        method: 'POST', // Make sure it's a POST request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          age: parseFloat(age),
+          priors_count: parseInt(priorsCount),
+          race: parseInt(race),
+        }),
+      });
 
-        // Get audit result
-        const auditResponse = await fetch('https://immigrationbiasproject-production.up.railway.app/audit');
-        const auditData = await auditResponse.json();
-        document.getElementById('auditResult').innerText = `Disparate Impact: ${auditData.disparate_impact}, Mean Difference: ${auditData.mean_difference}`;
-
-        // Hide loading message and show the results
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('result').style.display = 'block';
-      } catch (error) {
-        // Handle error
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').innerText = 'An error occurred while processing your request. Please try again later.';
-        document.getElementById('error').style.display = 'block';
-      }
+      const data = await response.json();
+      document.getElementById('explanation').innerText = `Explanation: ${JSON.stringify(data.explanation)}`;
     });
   </script>
 
