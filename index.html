@@ -3,108 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visa Decisioning System</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f9;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #fff;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      text-align: center;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 1.1em;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      font-size: 1em;
-      margin-top: 5px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-    .form-group button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      font-size: 1.1em;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .form-group button:hover {
-      background-color: #45a049;
-    }
-    .result, .explanation {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #f1f1f1;
-      border-radius: 4px;
-      font-size: 1.1em;
-    }
-  </style>
+  <title>Immigration Visa Bias Auditing</title>
 </head>
 <body>
+  <h1>Immigration Visa Bias Auditing</h1>
 
-  <div class="container">
-    <h1>Visa Decisioning System</h1>
+  <div>
+    <label for="age">Age:</label>
+    <input type="number" id="age" name="age" required>
+  </div>
+  <div>
+    <label for="priorsCount">Number of Prior Offenses:</label>
+    <input type="number" id="priorsCount" name="priorsCount" required>
+  </div>
+  <div>
+    <label for="race">Race (0 = White, 1 = Black, 2 = Other):</label>
+    <input type="number" id="race" name="race" required>
+  </div>
 
-    <!-- Input form for the user -->
-    <div class="form-group">
-      <label for="age">Age</label>
-      <input type="number" id="age" placeholder="Enter your age" required>
-    </div>
+  <div>
+    <button id="predictButton">Predict Visa Decision</button>
+    <button id="explainButton">Explain Decision</button>
+    <button id="auditButton">Audit Bias</button>
+  </div>
 
-    <div class="form-group">
-      <label for="priorsCount">Number of Prior Offenses</label>
-      <input type="number" id="priorsCount" placeholder="Enter number of prior offenses" required>
-    </div>
+  <div id="result">
+    <h2>Visa Decision: <span id="decision"></span></h2>
+  </div>
 
-    <div class="form-group">
-      <label for="race">Race (0 = Other, 1 = Caucasian, etc.)</label>
-      <input type="number" id="race" placeholder="Enter race code" required>
-    </div>
+  <div id="explanation">
+    <h3>Explanation:</h3>
+    <pre id="explanationText"></pre>
+  </div>
 
-    <div class="form-group">
-      <button id="predictButton">Predict Visa Decision</button>
-    </div>
-
-    <!-- Display result here -->
-    <div class="result" id="result"></div>
-
-    <div class="form-group">
-      <button id="explainButton">Explain Decision</button>
-    </div>
-
-    <!-- Display explanation here -->
-    <div class="explanation" id="explanation"></div>
+  <div id="audit">
+    <h3>Audit Metrics:</h3>
+    <pre id="auditMetrics"></pre>
   </div>
 
   <script>
-    // Function to handle prediction
-    const predictButton = document.getElementById('predictButton');
-    predictButton.addEventListener('click', async () => {
+    // Predict Visa Decision
+    document.getElementById('predictButton').addEventListener('click', async () => {
       const age = document.getElementById('age').value;
       const priorsCount = document.getElementById('priorsCount').value;
       const race = document.getElementById('race').value;
 
-      // Send POST request to backend /predict endpoint
       const response = await fetch('https://immigrationbiasproject-production.up.railway.app/predict', {
-        method: 'POST', // Make sure it's a POST request
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -116,19 +61,17 @@
       });
 
       const data = await response.json();
-      document.getElementById('result').innerText = `Visa Decision: ${data.visa_decision}`;
+      document.getElementById('decision').innerText = data.visa_decision;
     });
 
-    // Function to handle explanation
-    const explainButton = document.getElementById('explainButton');
-    explainButton.addEventListener('click', async () => {
+    // Explain Decision
+    document.getElementById('explainButton').addEventListener('click', async () => {
       const age = document.getElementById('age').value;
       const priorsCount = document.getElementById('priorsCount').value;
       const race = document.getElementById('race').value;
 
-      // Send POST request to backend /explain endpoint
       const response = await fetch('https://immigrationbiasproject-production.up.railway.app/explain', {
-        method: 'POST', // Make sure it's a POST request
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -140,9 +83,18 @@
       });
 
       const data = await response.json();
-      document.getElementById('explanation').innerText = `Explanation: ${JSON.stringify(data.explanation)}`;
+      document.getElementById('explanationText').innerText = JSON.stringify(data.explanation, null, 2);
+    });
+
+    // Audit Bias
+    document.getElementById('auditButton').addEventListener('click', async () => {
+      const response = await fetch('https://immigrationbiasproject-production.up.railway.app/audit', {
+        method: 'GET',
+      });
+
+      const data = await response.json();
+      document.getElementById('auditMetrics').innerText = `Disparate Impact: ${data.disparate_impact}\nMean Difference: ${data.mean_difference}`;
     });
   </script>
-
 </body>
 </html>
