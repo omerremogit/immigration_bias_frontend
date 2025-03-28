@@ -54,14 +54,14 @@
     button:hover {
       background-color: #2980b9;
     }
-    .result, .explanation, .audit {
+    .result, .explanation, .audit, .summary {
       margin-top: 30px;
       padding: 15px;
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #ecf0f1;
     }
-    .explanation, .audit {
+    .explanation, .audit, .summary {
       background-color: #f9f9f9;
     }
     .metrics {
@@ -69,7 +69,7 @@
       margin-top: 15px;
       line-height: 1.5;
     }
-    .explanation p, .audit p {
+    .explanation p, .audit p, .summary p {
       font-size: 16px;
     }
     .button-container {
@@ -103,6 +103,7 @@
       <button id="predictButton">Predict Visa Decision</button>
       <button id="explainButton">Explain Decision</button>
       <button id="auditButton">Audit Bias</button>
+      <button id="summaryButton">Show Summary</button>
     </div>
 
     <div class="result">
@@ -118,9 +119,18 @@
       <h3>Audit Metrics:</h3>
       <p id="auditMetrics"></p>
     </div>
+
+    <div class="summary" style="display:none;">
+      <h3>Overall Summary:</h3>
+      <p id="summaryText"></p>
+    </div>
   </div>
 
   <script>
+    let predictionResult = '';
+    let explanationResult = '';
+    let auditResult = '';
+
     // Predict Visa Decision
     document.getElementById('predictButton').addEventListener('click', async () => {
       const age = document.getElementById('age').value;
@@ -140,7 +150,8 @@
       });
 
       const data = await response.json();
-      document.getElementById('decision').innerText = data.visa_decision;
+      predictionResult = data.visa_decision;
+      document.getElementById('decision').innerText = predictionResult;
     });
 
     // Explain Decision
@@ -164,12 +175,12 @@
       const data = await response.json();
 
       // Include decision in explanation
-      let explanationText = `Visa Decision: ${data.visa_decision}\n\nExplanation for the decision:\n\n`;
+      explanationResult = `Visa Decision: ${data.visa_decision}\n\nExplanation for the decision:\n\n`;
       data.explanation.forEach(([rule, importance]) => {
-        explanationText += `${rule} (Impact: ${importance > 0 ? "Positive" : "Negative"})\n`;
+        explanationResult += `${rule} (Impact: ${importance > 0 ? "Positive" : "Negative"})\n`;
       });
 
-      document.getElementById('explanationText').innerText = explanationText;
+      document.getElementById('explanationText').innerText = explanationResult;
     });
 
     // Audit Bias
@@ -189,7 +200,19 @@
         ? `Mean Difference: ${data.mean_difference} (This suggests the decisioning is biased against the unprivileged group.)`
         : `Mean Difference: ${data.mean_difference} (This indicates less or no bias between groups.)`;
 
-      document.getElementById('auditMetrics').innerText = `${disparateImpactText}\n${meanDifferenceText}`;
+      auditResult = `${disparateImpactText}\n${meanDifferenceText}`;
+      document.getElementById('auditMetrics').innerText = auditResult;
+    });
+
+    // Show Overall Summary
+    document.getElementById('summaryButton').addEventListener('click', () => {
+      const summaryText = `
+        Visa Decision: ${predictionResult}\n\n
+        Explanation:\n${explanationResult}\n\n
+        Audit Metrics:\n${auditResult}
+      `;
+      document.getElementById('summaryText').innerText = summaryText;
+      document.querySelector('.summary').style.display = 'block';
     });
   </script>
 </body>
