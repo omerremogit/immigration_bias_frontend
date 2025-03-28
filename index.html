@@ -6,76 +6,115 @@
   <title>Immigration Visa Bias Auditing</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      padding: 10px;
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
     }
     h1 {
       text-align: center;
+      margin-top: 40px;
+      color: #2c3e50;
     }
     .container {
       width: 60%;
       margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
     .input-section {
       margin-bottom: 20px;
     }
     label, button {
       font-size: 18px;
+      color: #34495e;
     }
     input {
-      padding: 5px;
+      padding: 8px;
       font-size: 16px;
+      width: 100%;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
     button {
-      padding: 10px;
+      padding: 10px 20px;
       font-size: 18px;
       cursor: pointer;
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      margin-top: 20px;
+      transition: background-color 0.3s;
     }
-    #result, #explanation, #audit {
+    button:hover {
+      background-color: #2980b9;
+    }
+    .result, .explanation, .audit {
       margin-top: 30px;
       padding: 15px;
       border: 1px solid #ddd;
       border-radius: 5px;
+      background-color: #ecf0f1;
     }
-    #audit, #explanation {
+    .explanation, .audit {
       background-color: #f9f9f9;
+    }
+    .metrics {
+      font-size: 16px;
+      margin-top: 15px;
+      line-height: 1.5;
+    }
+    .explanation p, .audit p {
+      font-size: 16px;
+    }
+    .button-container {
+      display: flex;
+      gap: 20px;
+    }
+    .button-container button {
+      width: 32%;
     }
   </style>
 </head>
 <body>
+
   <h1>Immigration Visa Bias Auditing</h1>
 
   <div class="container">
     <div class="input-section">
       <label for="age">Age:</label>
-      <input type="number" id="age" name="age" required>
+      <input type="number" id="age" name="age" required placeholder="Enter age">
     </div>
     <div class="input-section">
       <label for="priorsCount">Number of Prior Offenses:</label>
-      <input type="number" id="priorsCount" name="priorsCount" required>
+      <input type="number" id="priorsCount" name="priorsCount" required placeholder="Enter number of offenses">
     </div>
     <div class="input-section">
       <label for="race">Race (0 = White, 1 = Black, 2 = Other):</label>
-      <input type="number" id="race" name="race" required>
+      <input type="number" id="race" name="race" required placeholder="Enter race code">
     </div>
 
-    <div>
+    <div class="button-container">
       <button id="predictButton">Predict Visa Decision</button>
       <button id="explainButton">Explain Decision</button>
       <button id="auditButton">Audit Bias</button>
     </div>
 
-    <div id="result">
+    <div class="result">
       <h2>Visa Decision: <span id="decision"></span></h2>
     </div>
 
-    <div id="explanation">
-      <h3>Explanation:</h3>
+    <div class="explanation">
+      <h3>Explanation of Decision:</h3>
       <p id="explanationText"></p>
     </div>
 
-    <div id="audit">
+    <div class="audit">
       <h3>Audit Metrics:</h3>
       <p id="auditMetrics"></p>
     </div>
@@ -123,9 +162,9 @@
       });
 
       const data = await response.json();
-      
-      // Simplify explanation for users
-      let explanationText = "The explanation for the decision is based on the following criteria:\n\n";
+
+      // Include decision in explanation
+      let explanationText = `Visa Decision: ${data.visa_decision}\n\nExplanation for the decision:\n\n`;
       data.explanation.forEach(([rule, importance]) => {
         explanationText += `${rule} (Impact: ${importance > 0 ? "Positive" : "Negative"})\n`;
       });
@@ -140,12 +179,12 @@
       });
 
       const data = await response.json();
-      
+
       // Provide simple interpretation for audit metrics
       const disparateImpactText = data.disparate_impact < 0.8
         ? `Disparate Impact: ${data.disparate_impact} (This indicates potential bias in the decisioning process. A value below 0.8 suggests bias.)`
         : `Disparate Impact: ${data.disparate_impact} (This value suggests no significant bias.)`;
-      
+
       const meanDifferenceText = data.mean_difference < 0
         ? `Mean Difference: ${data.mean_difference} (This suggests the decisioning is biased against the unprivileged group.)`
         : `Mean Difference: ${data.mean_difference} (This indicates less or no bias between groups.)`;
